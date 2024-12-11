@@ -1,10 +1,7 @@
 from medmnist import BreastMNIST
 import numpy as np
-from sklearn import svm 
-from sklearn.model_selection import GridSearchCV
+from sklearn import svm
 from sklearn.metrics import accuracy_score 
-
-categories = ["benign", "malignant"]
 
 trainSet = BreastMNIST(split="train", download="True")
 valSet = BreastMNIST(split="val", download="True")
@@ -24,7 +21,7 @@ kernels = ['linear', 'sigmoid' ,'poly', 'rbf']
 
 for i, kernel in enumerate(kernels):
     model = svm.SVC( C=2.0,kernel= kernel)
-    model.fit(x_train,y_train) # fit to SVC
+    model.fit(x_train,y_train)
 
     y_pred = model.predict(x_test)
 
