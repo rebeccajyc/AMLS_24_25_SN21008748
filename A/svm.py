@@ -7,10 +7,6 @@ trainSet = BreastMNIST(split="train", download="True")
 valSet = BreastMNIST(split="val", download="True")
 testSet = BreastMNIST(split="test", download="True")
 
-for i in range(len(trainSet)):
-    x_train = np.array(trainSet[i][0]).flatten()
-    y_train = np.array(trainSet[i][1]).flatten()
-
 x_train = np.array([np.array(trainSet[i][0]).flatten() for i in range(len(trainSet))])
 y_train = np.array([trainSet[i][1].flatten() for i in range(len(trainSet))]).ravel()
 
