@@ -3,8 +3,6 @@ from sklearn.metrics import accuracy_score
 from skimage.feature import hog
 import numpy as np
 from medmnist import BreastMNIST
-import cv2
-
 
 trainSet = BreastMNIST(split="train", download="True")
 valSet = BreastMNIST(split="val", download="True")
