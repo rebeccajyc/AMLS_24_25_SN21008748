@@ -1,4 +1,4 @@
-from medmnist import BreastMNIST, Evaluator
+from medmnist import BreastMNIST
 import torch
 import torchvision.transforms as transforms
 import torch.utils.data as data
