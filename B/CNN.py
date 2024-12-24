@@ -1,4 +1,4 @@
-from medmnist import BreastMNIST
+from medmnist import BloodMNIST
 import torch
 import torchvision.transforms as transforms
 import torch.utils.data as data
@@ -11,8 +11,8 @@ import numpy as np
 
 
 lr = 0.001
-no_epochs = 100
-batch_size = 50
+no_epochs = 50
+batch_size = 200
 
 print(f"Is CUDA supported by this system? {torch.cuda.is_available()}")
 print(f"CUDA version: {torch.version.cuda}")
@@ -24,9 +24,9 @@ data_transform = transforms.Compose([
     transforms.Normalize(mean=[.5], std=[.5])
 ])
 
-trainSet = BreastMNIST(split='train', transform=data_transform, download="True")
-valSet = BreastMNIST(split='val', transform=data_transform, download="True")
-testSet = BreastMNIST(split='test', transform=data_transform, download="True")
+trainSet = BloodMNIST(split='train', transform=data_transform, download="True")
+valSet = BloodMNIST(split='val', transform=data_transform, download="True")
+testSet = BloodMNIST(split='test', transform=data_transform, download="True")
 
 train_loader = data.DataLoader(dataset=trainSet, batch_size=batch_size, shuffle=True)
 val_loader = data.DataLoader(dataset=valSet, batch_size=2*batch_size, shuffle=False)
@@ -94,7 +94,7 @@ class neuralNet(nn.Module):
         x = self.fc(x)
         return x
     
-model = neuralNet(input_channels=1, no_classes=2).to(device)
+model = neuralNet(input_channels=3, no_classes=8).to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
