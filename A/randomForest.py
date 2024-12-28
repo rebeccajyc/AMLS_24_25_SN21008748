@@ -4,16 +4,35 @@ from skimage.feature import hog
 import numpy as np
 from medmnist import BreastMNIST
 
+# IMPORT IMAGES
 trainSet = BreastMNIST(split="train", download="True")
 valSet = BreastMNIST(split="val", download="True")
 testSet = BreastMNIST(split="test", download="True")
 
-# RF
-x_train = np.array([np.array(trainSet[i][0]).flatten() for i in range(len(trainSet))])
-y_train = np.array([trainSet[i][1].flatten() for i in range(len(trainSet))]).ravel()
+#x_train = np.array([np.array(trainSet[i][0]).flatten() for i in range(len(trainSet))])
+#y_train = np.array([trainSet[i][1].flatten() for i in range(len(trainSet))]).ravel()
 
-x_test = np.array([np.array(testSet[i][0]).flatten() for i in range(len(testSet))])
-y_test = np.array([testSet[i][1].flatten() for i in range(len(testSet))]).ravel()
+#x_val = np.array([np.array(valSet[i][0]).flatten() for i in range(len(valSet))])
+#y_val = np.array([valSet[i][1].flatten() for i in range(len(valSet))]).ravel()
+
+#x_train = np.concatenate((x_train, x_val), axis=0)
+#y_train = np.concatenate((y_train, y_val), axis=0)
+
+#x_test = np.array([np.array(testSet[i][0]).flatten() for i in range(len(testSet))])
+#y_test = np.array([testSet[i][1].flatten() for i in range(len(testSet))]).ravel()
+
+# PREPROCESSING - FLATTEN 2D IMAGES INTO 1D ARRAYS
+x_train = np.concatenate((trainSet.imgs, valSet.imgs), axis=0)
+y_train = np.concatenate((trainSet.labels, valSet.labels), axis=0)
+
+x_train = x_train.reshape(x_train.shape[0], -1)
+y_train = y_train.reshape(y_train.shape[0], -1).ravel()
+
+x_test = testSet.imgs
+y_test = testSet.labels
+
+x_test = x_test.reshape(x_test.shape[0], -1)
+y_test = y_test.reshape(y_test.shape[0], -1).ravel()
 
 rf_classifier = RandomForestClassifier(n_estimators=1000, criterion='gini', max_depth=5)
 rf_classifier.fit(x_train, y_train)
