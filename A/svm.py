@@ -58,7 +58,7 @@ y_pred = final_svm.predict(x_test)
 
 # ACCURACY COMPARISON WITH CROSS VALIDATION
 accuracy = accuracy_score(y_pred, y_test)
-print(f'final_svm Accuracy: {accuracy}')
+print(f'final_svm Accuracy (without Cross Validation): {accuracy}')
 
 cross_val = cross_val_score(final_svm, x_train, y_train, cv=kf)
 print(f'final_svm Accuracy (Cross Validation - K-Folds): {cross_val}')
