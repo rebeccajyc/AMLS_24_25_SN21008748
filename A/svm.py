@@ -12,7 +12,7 @@ trainSet = BreastMNIST(split="train", download="True")
 valSet = BreastMNIST(split="val", download="True")
 testSet = BreastMNIST(split="test", download="True")
 
-# TRAINING SET PREPROCESSING - COMBINE TRAIN AND VAL SET + # PREPROCESSING - FLATTEN 2D IMAGES INTO 1D ARRAYS
+# TRAINING SET PREPROCESSING - COMBINE TRAIN AND VAL SET + FLATTEN 2D IMAGES INTO 1D ARRAYS
 x_train = np.concatenate((trainSet.imgs, valSet.imgs), axis=0)
 y_train = np.concatenate((trainSet.labels, valSet.labels), axis=0)
 
@@ -57,10 +57,10 @@ final_svm.fit(x_train, y_train)
 y_pred = final_svm.predict(x_test)
 
 # ACCURACY COMPARISON WITH CROSS VALIDATION
-accuracy = accuracy_score(y_pred, y_test)
+accuracy = accuracy_score(y_test, y_pred)
 print(f'final_svm Accuracy (without Cross Validation): {accuracy}')
 
-cross_val = cross_val_score(final_svm, x_train, y_train, cv=kf)
+cross_val = cross_val_score(final_svm, x_train, y_train, scoring='accuracy', cv=kf)
 print(f'final_svm Accuracy (Cross Validation - K-Folds): {cross_val}')
 print(f'final_svm Mean Accuracy (Cross Validation - K-Folds): {cross_val.mean()}')
 
