@@ -4,6 +4,7 @@ import torchvision.transforms as transforms
 import torch.utils.data as data
 import torch.nn as nn
 import torch.optim as optim
+from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
 from tqdm import tqdm
 from sklearn.utils import class_weight
 from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay, classification_report, roc_curve, auc
@@ -22,9 +23,6 @@ if torch.cuda.is_available():
 lr = 0.001
 no_epochs = 100
 batch_size = 25
-
-print(f"Is CUDA supported by this system? {torch.cuda.is_available()}")
-print(f"CUDA version: {torch.version.cuda}")
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -121,76 +119,15 @@ class neuralNet(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x
-    '''
-    def __init__(self, input_channels, no_classes):
-        super(neuralNet, self).__init__()
 
-    
-        self.conv1 = nn.Conv2d(input_channels, 32 , kernel_size=3, padding=1)
-        self.batchNorm1 = nn.BatchNorm2d(32)
-        self.relu = nn.ReLU()
-        
-        self.dropout = nn.Dropout(0.2)
-
-        self.conv2 = nn.Conv2d(32, 32, kernel_size=3, padding=1)
-        self.batchNorm2 = nn.BatchNorm2d(32)
-        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=1, padding=1)
-
-        self.conv3 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        self.batchNorm3 = nn.BatchNorm2d(64)
-
-        self.conv4 =  nn.Conv2d(64, 128, kernel_size=3, padding=1)
-        self.batchNorm4 = nn.BatchNorm2d(64)
-        
-        #self.conv5 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
-        #self.batchNorm5 = nn.BatchNorm2d(64)
-
-        self.fc = nn.Sequential(
-            nn.Linear(128 * 30 * 30, 128),
-            nn.ReLU(),
-            nn.Dropout(0.5),
-            #nn.Linear(128, no_classes) FOR
-            nn.Linear(128, 1) # FOR BCE
-            )
-        
-        
-    def forward(self,x):
-       
-        x = self.conv1(x)
-        #x = self.batchNorm1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)
-
-        #x = self.dropout(x)
-
-        x = self.conv2(x)
-        #x = self.batchNorm2(x)
-        x = self.relu(x)
-        
-        x = self.conv3(x)
-        #x = self.batchNorm3(x)
-        x = self.relu(x)
-
-        x = self.conv4(x)
-        #x = self.batchNorm4(x)
-        x = self.relu(x)
-
-        #x = self.conv5(x)
-        #x = self.batchNorm5(x)
-        #x = self.relu(x)
-        x = self.maxpool(x)
-
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
-        return x
-        '''
-    
 model = neuralNet(input_channels=1, no_classes=2).to(device)
 
 criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight) # SIGMOID FOR BINARY CLASSIFICATION
 #optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
 #optimizer = optim.RMSprop(model.parameters(), lr=lr, alpha=0.99,eps=1e-08)
 optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-2)
+#scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
+scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
 
 #Initialise Variables for EarlyStopping
 best_loss = float('inf')
@@ -289,6 +226,9 @@ for epoch in range(no_epochs):
 
         if wait >= patience:
             print(f"Early stopping triggered after {epoch+1} epochs.")
+    
+    scheduler.step(avgValLoss)
+
 model.load_state_dict(best_model_weights)
     
         
@@ -350,3 +290,4 @@ print(classification_report(y_true, y_score, target_names=['0', '1'])) #as strin
 # batch size >25 acc drops 
 # BCE FOR BINAREY
 #weights
+# no scheudler - more variable / erratic /variations
