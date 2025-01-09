@@ -32,6 +32,7 @@ x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 
 # CROSS VALIDATION (KFOLD) PARAMETERS
+np.random.seed(42)
 num_folds = 5
 kf = KFold(n_splits=num_folds, shuffle=True, random_state=10)
 
