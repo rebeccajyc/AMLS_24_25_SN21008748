@@ -52,10 +52,8 @@ df = df.sort_values(by='Accuracy', ascending=False)
 print(df)
 print(f'Best Parameters: {grid_search.best_params_} -> Best Score: {grid_search.best_score_}')
 
-# FINAL MODEL
-final_svm = svm.SVC(probability=True, C=grid_search.best_params_['C'], gamma=grid_search.best_params_['gamma'], kernel=grid_search.best_params_['kernel'], random_state=10)
-
 # EVALUATE FINAL MODEL ON TEST SET
+final_svm = svm.SVC(probability=True, C=grid_search.best_params_['C'], gamma=grid_search.best_params_['gamma'], kernel=grid_search.best_params_['kernel'], random_state=10)
 final_svm.fit(x_train, y_train)
 y_pred = final_svm.predict(x_test)
 test_accuracy = accuracy_score(y_test, y_pred)

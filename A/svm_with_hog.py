@@ -2,7 +2,7 @@ from medmnist import BreastMNIST
 import numpy as np
 from sklearn import svm
 from skimage.feature import hog
-from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay, classification_report
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay, classification_report, roc_curve, auc
 from sklearn.model_selection import cross_val_score, KFold, GridSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.preprocessing import StandardScaler
@@ -24,7 +24,6 @@ y_train_hog = y_train.ravel()
 x_test = testSet.imgs
 y_test = testSet.labels
 
-
 # CROSS VALIDATION (KFOLD) PARAMETERS
 np.random.seed(42)
 num_folds = 5
@@ -39,7 +38,7 @@ hog_param_grid = {
     'orientations': [6, 9, 12],
     'pixels_per_cell': [(4, 4), (6, 6), (8, 8)],
     'cells_per_block': [(1, 1), (2, 2), (3, 3)],
-    'block_norm': ['L2-Hys', 'L1', 'L2'],
+    'block_norm': ['L2-Hys', 'L1', 'L2']
 }
 
 # HOG GRID SEARCH
@@ -49,11 +48,10 @@ for params in ParameterGrid(hog_param_grid):
             cells_per_block=params['cells_per_block'], 
             block_norm=params['block_norm'])
             for image in x_train]
-    
-    #scaler = StandardScaler()
-    #x_train_hog = scaler.fit_transform(x_train_hog)
+    scaler = StandardScaler()
+    x_train_hog = scaler.fit_transform(x_train_hog)
 
-    hog_model = svm.SVC(C=1.00, gamma='scale', kernel='rbf')
+    hog_model = svm.SVC()
     cv_scores = cross_val_score(hog_model, x_train_hog, y_train_hog, cv=kf)
     mean_cv_scores = cv_scores.mean()
 
@@ -105,15 +103,15 @@ for image,label in zip(x_test, y_test):
     x_test_svc.append(hog_features)
     y_test_svc.append(label)
 
+# PREPROCESSING - STANDARDISATION
 x_train_svc = np.array(x_train_svc)
 x_test_svc = np.array(x_test_svc)
 y_train_svc = np.array(y_train_svc).ravel()
 y_test_svc = np.array(y_test_svc).ravel()
 
-
-#x_train_svc = scaler.fit_transform(x_train_svc)
-#x_test_svc = scaler.transform(x_test_svc)
-
+scaler = StandardScaler()
+x_train_svc = scaler.fit_transform(x_train_svc)
+x_test_svc = scaler.transform(x_test_svc)
 
 # SVM GRID SEARCH PARAMETERS
 param_grid = {'C':[0.01, 0.1, 1, 10, 100, 200],
@@ -132,26 +130,34 @@ print(df)
 print(f'Best SVC Parameters: {grid_search.best_params_}>>> Best Score: {grid_search.best_score_}')
 
 # FINAL MODEL WITH BEST PARAMETERS FOR HOG AND SVM
-final_svm = svm.SVC(C=grid_search.best_params_['C'], gamma=grid_search.best_params_['gamma'], kernel=grid_search.best_params_['kernel'])
+final_svm = svm.SVC(probability=True, C=grid_search.best_params_['C'], gamma=grid_search.best_params_['gamma'], kernel=grid_search.best_params_['kernel'], random_state=10)
 final_svm.fit(x_train_svc, y_train_svc)
 y_pred = final_svm.predict(x_test_svc)
-
-# ACCURACY COMPARISON WITH CROSS VALIDATION
-accuracy = accuracy_score(y_pred, y_test_svc)
-print(f'final_svm Accuracy: {accuracy}')
-
-cross_val = cross_val_score(final_svm, x_train_svc, y_train_svc, cv=kf)
-print(f'final_svm Accuracy (Cross Validation - K-Folds): {cross_val}')
-print(f'final_svm Mean Accuracy (Cross Validation - K-Folds): {cross_val.mean()}')
+test_accuracy = accuracy_score(y_pred, y_test_svc)
+print(f'Test Set Accuracy: {test_accuracy}')
 
 # CONFUSION MATRIX
 conf_matrix = confusion_matrix(y_test_svc, y_pred, labels=[0,1])
-disp = ConfusionMatrixDisplay(confusion_matrix=conf_matrix, display_labels=[0,1])
-disp.plot(cmap=plt.cm.Blues)
-plt.title('Confusion Matrix',fontsize=15, pad=20)
-plt.xlabel('Prediction', fontsize=11)
-plt.ylabel('Actual', fontsize=11)
+disp = ConfusionMatrixDisplay(confusion_matrix=conf_matrix, display_labels=['malignant','benign'])
+disp.plot(cmap=plt.cm.Oranges)
+plt.title('Confusion Matrix',fontsize=13, weight='bold', pad=10)
+plt.xlabel('Prediction', fontsize=11, weight='bold')
+plt.ylabel('Actual', fontsize=11, weight='bold')
 plt.show()
 
 # CLASSIFICATION REPORT
 print(classification_report(y_test_svc, y_pred, target_names=['0','1']))
+
+# ROC-AUC CURVE
+y_pred_prob = final_svm.predict_proba(x_test_svc)[:, 1]
+fpr, tpr, thresholds = roc_curve(y_test_svc, y_pred_prob)
+roc_auc = auc(fpr, tpr)
+
+plt.figure()
+plt.plot(fpr, tpr, 'darkorange', label=f'ROC curve (AUC = {roc_auc:.3f})')
+plt.plot([0, 1], [0, 1], 'k--', label='Random Classifier')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) Curve', weight='bold')
+plt.legend(loc='lower right')
+plt.show()

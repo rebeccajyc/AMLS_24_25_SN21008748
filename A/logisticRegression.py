@@ -1,37 +1,92 @@
 from medmnist import BreastMNIST
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score 
-from sklearn.model_selection import GridSearchCV
-from sklearn.pipeline import Pipeline
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay, classification_report, roc_curve, auc
+from sklearn.model_selection import cross_val_score, KFold, GridSearchCV
+from sklearn.preprocessing import StandardScaler
+import pandas as pd
+import matplotlib.pyplot as plt
 
+# IMPORT DATASETS
 trainSet = BreastMNIST(split="train", download="True")
 valSet = BreastMNIST(split="val", download="True")
 testSet = BreastMNIST(split="test", download="True")
 
-x_train = np.array([np.array(trainSet[i][0]).flatten() for i in range(len(trainSet))])
-y_train = np.array([trainSet[i][1].flatten() for i in range(len(trainSet))]).ravel()
+# TRAINING SET PREPROCESSING - COMBINE TRAIN AND VAL SET + FLATTEN 2D IMAGES INTO 1D ARRAYS
+x_train = np.concatenate((trainSet.imgs, valSet.imgs), axis=0)
+y_train = np.concatenate((trainSet.labels, valSet.labels), axis=0)
 
-x_test = np.array([np.array(testSet[i][0]).flatten() for i in range(len(testSet))])
-y_test = np.array([testSet[i][1].flatten() for i in range(len(testSet))]).ravel()
+x_train = x_train.reshape(x_train.shape[0], -1)
+y_train = y_train.reshape(y_train.shape[0], -1).ravel()
 
+# TEST SET PREPROCESSING - FLATTEN 2D IMAGES INTO 1D ARRAYS
+x_test = testSet.imgs
+y_test = testSet.labels
 
-param_grid=[{'max_iter':[1,10,100,1000, 2000]}]
-    
-logRegress = LogisticRegression(solver='saga')
+x_test = x_test.reshape(x_test.shape[0], -1)
+y_test = y_test.reshape(y_test.shape[0], -1).ravel()
 
-grid = GridSearchCV(estimator=logRegress,
+# PREPROCESSING - DATA STANDARDISATION
+scaler = StandardScaler()
+x_train = scaler.fit_transform(x_train)
+x_test = scaler.transform(x_test)
+
+# CROSS VALIDATION (KFOLD) PARAMETERS
+np.random.seed(42)
+num_folds = 5
+kf = KFold(n_splits=num_folds, shuffle=True, random_state=10)
+
+# GRID SEARCH PARAMETERS
+param_grid = {
+    'C': [0.01, 0.1, 1, 10],
+    'penalty': ['l2'],
+    'solver': ['lbfgs', 'liblinear', 'newton-cg'],
+    'class_weight': [None, 'balanced'],
+    'max_iter': [1000, 2000, 3000]
+}
+
+# GRID SEARCH MODEL
+model = LogisticRegression()
+grid_search = GridSearchCV(model,
                       param_grid=param_grid,
-                      scoring='accuracy')
-grid.fit(x_train, y_train)
-print(grid.best_params_)
+                      scoring='accuracy',
+                      cv=kf)
+grid_search.fit(x_train, y_train)
 
+# DATAFRAME OF GRID SEARCH RESULTS
+df = pd.concat([pd.DataFrame(grid_search.cv_results_["params"]), pd.DataFrame(grid_search.cv_results_["mean_test_score"], columns=["Mean Accuracy"])], axis=1)
+df = df.sort_values(by='Mean Accuracy', ascending=False)
+print(df)
+print(f'Best Parameters: {grid_search.best_params_} -> Best score: {grid_search.best_score_}')
 
-final_logRegress = LogisticRegression(solver='saga', max_iter=grid.best_params_['max_iter'])
+# FINAL LOGISITIC REGRESSION MODEL WITH BEST PARAMETERS
+final_logRegress = LogisticRegression(C=grid_search.best_params_["C"], penalty=grid_search.best_params_["penalty"], solver=grid_search.best_params_["solver"], class_weight=grid_search.best_params_["class_weight"], max_iter=grid_search.best_params_["max_iter"])
 final_logRegress.fit(x_train, y_train)
-
 y_pred = final_logRegress.predict(x_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Test set accuracy: {accuracy}')
 
-accuracy = accuracy_score(y_pred, y_test)
+# CONFUSION MATRIX
+conf_matrix = confusion_matrix(y_test, y_pred, labels=[0,1])
+disp = ConfusionMatrixDisplay(confusion_matrix=conf_matrix, display_labels=['malignant','benign'])
+disp.plot(cmap=plt.cm.Oranges)
+plt.title('Confusion Matrix',fontsize=13, weight='bold', pad=10)
+plt.xlabel('Prediction', fontsize=11, weight='bold')
+plt.ylabel('Actual', fontsize=11, weight='bold')
+plt.show()
 
-print(accuracy) 
+# CLASSIFICATION REPORT
+print(classification_report(y_test, y_pred, target_names=['0', '1']))
+
+# ROC-AUC CURVE
+y_pred_prob = final_logRegress.predict_proba(x_test)[:, 1]
+fpr, tpr, thresholds = roc_curve(y_test, y_pred_prob)
+roc_auc = auc(fpr, tpr)
+plt.figure()
+plt.plot(fpr, tpr, 'darkorange', label=f'ROC curve (AUC = {roc_auc:.3f})')
+plt.plot([0, 1], [0, 1], 'k--', label='Random Classifier')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) Curve', weight='bold')
+plt.legend(loc='lower right')
+plt.show()
