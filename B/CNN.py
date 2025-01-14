@@ -11,14 +11,15 @@ from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDis
 import matplotlib.pyplot as plt
 import numpy as np
 import copy
-import random
 
 # SEEDED FOR REPRODUCEABILITY AND DEBUGGING
 np.random.seed(42)
 torch.manual_seed(42)
-random.seed(42)
+torch.cuda.manual_seed_all(42)
+
 if torch.cuda.is_available():
-    torch.cuda.manual_seed_all(42)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
 
 # GPU - DEVICE AVAILABILITY
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -93,7 +94,6 @@ class neuralNet(nn.Module):
         x = self.conv1(x)
         x = self.batchNorm1(x)
         x = self.relu(x)
-
 
         x = self.conv2(x)
         x = self.batchNorm2(x)
@@ -264,31 +264,37 @@ with torch.no_grad():
 
     print(f'Accuracy: {acc}')
 
+torch.save(model.state_dict(), 'cnn.pth')
+
 # PLOTTING ACCURACY GRAPH
 epochList = np.arange(no_epochs)
-plt.plot(epochList, trainAccList, 'r', label='train accuracy')
-plt.plot(epochList, valAccList, 'b', label='validation accuracy')
+plt.plot(epochList, trainAccList, 'r', label='Train Accuracy')
+plt.plot(epochList, valAccList, 'b', label='Validation Accuracy')
+plt.xlabel('Epoch', fontsize=11, weight='bold')
+plt.ylabel('Accuracy', fontsize=11, weight='bold')
 plt.legend(loc="upper left")
-plt.show()
+plt.show()  
 
 # PLOTTING LOSS GRAPH
-plt.plot(epochList, trainLossList, 'r', label='train loss')
-plt.plot(epochList, valLossList, 'b', label='validation loss')
+plt.plot(epochList, trainLossList, 'r', label='Train Loss')
+plt.plot(epochList, valLossList, 'b', label='Validation Loss')
+plt.xlabel('Epoch', fontsize=11, weight='bold')
+plt.ylabel('Loss', fontsize=11, weight='bold')
 plt.legend(loc="upper left")
 plt.show()
 
 # PLOTTING CONFUSION MATRIX
 conf_matrix = confusion_matrix(y_true, y_score, labels=[0, 1, 2, 3, 4, 5, 6, 7])
-disp = ConfusionMatrixDisplay(confusion_matrix=conf_matrix, display_labels=[0, 1, 2, 3, 4, 5, 6, 7])
-disp.plot(cmap=plt.cm.Blues)
-plt.title('Confusion Matrix',fontsize=15, pad=20)
-plt.xlabel('Prediction', fontsize=11)
-plt.ylabel('Actual', fontsize=11)
+disp = ConfusionMatrixDisplay(confusion_matrix=conf_matrix, display_labels=['0', '1', '2', '3', '4', '5', '6', '7'])
+disp.plot(cmap=plt.cm.Oranges)
+plt.title('Confusion Matrix',fontsize=13, weight='bold', pad=10)
+plt.xlabel('Prediction', fontsize=11, weight='bold')
+plt.ylabel('Actual', fontsize=11, weight='bold')
+#plt.xticks(rotation=70)
 plt.show()
 
 # PRINTING METRICS (PRECISION, RECALL, F1-SCORE, AUC-ROC)
 print(classification_report(y_true, y_score, target_names=['0', '1', '2', '3', '4', '5', '6', '7'])) #as string
-
 
 # lr
 # batch size
