@@ -181,7 +181,8 @@ for epoch in range(no_epochs):
 
 model.load_state_dict(best_model_weights)
     
-        
+torch.save(model.state_dict(), 'resnet50.pth')
+
 model.eval()
 y_true = torch.tensor([], device=device)
 y_score = torch.tensor([], device=device)
