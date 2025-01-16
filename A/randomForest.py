@@ -82,38 +82,24 @@ print(f'Best parameters: {best_params}>>>Best Score: {best_score}')
 # RF GRID SEARCH WITH OPTIMUM HOG PARAMETERS
 
 # TRAINING SET PREPROCESSING WITH HOG
-x_train_rf = []
-y_train_rf = []
+y_train_rf = y_train.ravel()
+y_test_rf = y_test.ravel()
 
-for image, label in zip(x_train, y_train):
-    hog_features = hog(image, orientations=best_params['orientations'], 
-                       pixels_per_cell=best_params['pixels_per_cell'], 
-                       cells_per_block=best_params['cells_per_block'],
-                       visualize=False)
-    x_train_rf.append(hog_features)
-    y_train_rf.append(label)
+x_train_rf = [hog(image,  orientations=best_params['orientations'], 
+            pixels_per_cell=best_params['pixels_per_cell'], 
+            cells_per_block=best_params['cells_per_block'], 
+            block_norm=best_params['block_norm'])
+            for image in x_train]
 
-# TEST SET PREPROCESSING WITH HOG
-x_test_rf = []
-y_test_rf = []
-
-for image,label in zip(x_test, y_test):
-    hog_features = hog(image, orientations=best_params['orientations'], 
-                       pixels_per_cell=best_params['pixels_per_cell'], 
-                       cells_per_block=best_params['cells_per_block'],
-                       visualize=False)
-    x_test_rf.append(hog_features)
-    y_test_rf.append(label)
-
-# PREPROCESSING - STANDARDISATION
-x_train_rf = np.array(x_train_rf)
-x_test_rf = np.array(x_test_rf)
-y_train_rf = np.array(y_train_rf).ravel()
-y_test_rf = np.array(y_test_rf).ravel()
+x_test_rf = [hog(image,  orientations=best_params['orientations'], 
+            pixels_per_cell=best_params['pixels_per_cell'], 
+            cells_per_block=best_params['cells_per_block'], 
+            block_norm=best_params['block_norm'])
+            for image in x_test]
 
 scaler = StandardScaler()
-x_train_svc = scaler.fit_transform(x_train_rf)
-x_test_svc = scaler.transform(x_test_rf)
+x_train_rf = scaler.fit_transform(x_train_rf)
+x_test_rf = scaler.transform(x_test_rf)
 
 # RF GRID SEARCH PARAMETERS
 param_grid = {
@@ -123,6 +109,7 @@ param_grid = {
     'min_samples_leaf': [1, 2],
     'max_features': ['sqrt', 'log2']
 }
+
 # GRID SEARCH MODEL
 model = RandomForestClassifier(random_state=10)
 grid_search = GridSearchCV(model, param_grid=param_grid, scoring='accuracy', cv=kf)
@@ -171,41 +158,3 @@ plt.ylabel('True Positive Rate')
 plt.title('Receiver Operating Characteristic (ROC) Curve', weight='bold')
 plt.legend(loc='lower right')
 plt.show()
-
-'''
-rf_classifier = RandomForestClassifier(n_estimators=1000, criterion='gini', max_depth=5)
-rf_classifier.fit(x_train, y_train)
-
-# HOG + RF
-x_train_hog = []
-y_train_hog = []
-
-for image,label in trainSet:
-    hog_features = hog(image, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(2, 2), visualize=False)
-
-    x_train_hog.append(hog_features)
-    y_train_hog.append(label)
-
-x_test_hog = []
-y_test_hog = []
-
-for image,label in testSet:
-    
-    hog_features = hog(image, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(2, 2), visualize=False)
-
-    x_test_hog.append(hog_features)
-    y_test_hog.append(label)
- 
-rf_classifier_hog = RandomForestClassifier(n_estimators=1000, criterion='gini', max_depth=5)
-rf_classifier_hog.fit(x_train_hog, y_train_hog)
-
-# PREDICT
-y_pred = rf_classifier.predict(x_test)
-y_pred_hog = rf_classifier_hog.predict(x_test_hog)
-
-accuracy = accuracy_score(y_pred, y_test)
-accuracy_hog = accuracy_score(y_pred_hog, y_test_hog)
-
-print(accuracy)
-print(accuracy_hog)
-'''

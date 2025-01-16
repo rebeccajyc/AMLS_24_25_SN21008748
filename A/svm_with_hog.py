@@ -76,38 +76,23 @@ print(f'Best parameters: {best_params}>>>Best Score: {best_score}')
 
 
 
-
 # SVM GRID SEARCH WITH OPTIMUM HOG PARAMETERS
 
 # TRAINING SET PREPROCESSING WITH HOG
-x_train_svc = []
-y_train_svc = []
+y_train_svc = y_train.ravel()
+y_test_svc = y_test.ravel()
 
-for image, label in zip(x_train, y_train):
-    hog_features = hog(image, orientations=best_params['orientations'], 
-                       pixels_per_cell=best_params['pixels_per_cell'], 
-                       cells_per_block=best_params['cells_per_block'],
-                       visualize=False)
-    x_train_svc.append(hog_features)
-    y_train_svc.append(label)
+x_train_svc = [hog(image,  orientations=best_params['orientations'], 
+            pixels_per_cell=best_params['pixels_per_cell'], 
+            cells_per_block=best_params['cells_per_block'], 
+            block_norm=best_params['block_norm'])
+            for image in x_train]
 
-# TEST SET PREPROCESSING WITH HOG
-x_test_svc = []
-y_test_svc = []
-
-for image,label in zip(x_test, y_test):
-    hog_features = hog(image, orientations=best_params['orientations'], 
-                       pixels_per_cell=best_params['pixels_per_cell'], 
-                       cells_per_block=best_params['cells_per_block'],
-                       visualize=False)
-    x_test_svc.append(hog_features)
-    y_test_svc.append(label)
-
-# PREPROCESSING - STANDARDISATION
-x_train_svc = np.array(x_train_svc)
-x_test_svc = np.array(x_test_svc)
-y_train_svc = np.array(y_train_svc).ravel()
-y_test_svc = np.array(y_test_svc).ravel()
+x_test_svc = [hog(image,  orientations=best_params['orientations'], 
+            pixels_per_cell=best_params['pixels_per_cell'], 
+            cells_per_block=best_params['cells_per_block'], 
+            block_norm=best_params['block_norm'])
+            for image in x_test]
 
 scaler = StandardScaler()
 x_train_svc = scaler.fit_transform(x_train_svc)
