@@ -24,8 +24,9 @@ from CNN_A import neuralNet_A
 sys.path.append('./B')
 from CNN_B import neuralNet_B
 
-
+# FUNCTION TO PRINT/DISPLAY METRICS FOR ML MODELS (CONFUSION MATRIX, CLASSIFICATION REPORT, ROC CURVE)
 def metrics(model, y_test, y_pred, x_test, title):
+    # CONFUSION MATRIX
     print(f'{title} - Confusion Matrix:')
     conf_matrix = confusion_matrix(y_test, y_pred, labels=[0,1])
     disp = ConfusionMatrixDisplay(confusion_matrix=conf_matrix, display_labels=['malignant','benign'])
@@ -54,7 +55,9 @@ def metrics(model, y_test, y_pred, x_test, title):
     plt.legend(loc='lower right')
     plt.show()
 
+# FUNCTION TO PRINT/DISPLAY METRICS FOR CNN MODELS (CONFUSION MATRIX, CLASSIFICATION REPORT, ROC CURVE)
 def metrics_cnn(y_true, y_score, y_score_prob, title, labels, display_labels, target_names):
+    # CONFUSION MATRIX
     print(f'{title} - Confusion Matrix:')
     conf_matrix = confusion_matrix(y_true, y_score, labels=labels)
     disp = ConfusionMatrixDisplay(confusion_matrix=conf_matrix, display_labels=display_labels)
@@ -85,13 +88,16 @@ def metrics_cnn(y_true, y_score, y_score_prob, title, labels, display_labels, ta
 
 
 def svm_model(x_train, y_train, x_test, y_test):
-
+    # STANDARISATION
     scaler = StandardScaler()
     x_train = scaler.fit_transform(x_train)
     x_test = scaler.transform(x_test)
 
+    # MODEL TRAINING
     model = svm.SVC(probability=True, C=100, gamma="scale", kernel="rbf", random_state=10)
     model.fit(x_train, y_train)
+
+    # PREDICTION + ACCURACY
     y_pred = model.predict(x_test)
     test_accuracy = accuracy_score(y_test, y_pred)
     print(f'SVM Test Accuracy: {test_accuracy}')
@@ -99,10 +105,11 @@ def svm_model(x_train, y_train, x_test, y_test):
     metrics(model, y_test, y_pred, x_test, title)
 
 def svm_hog_model(x_train, y_train, x_test, y_test):
-    
+    # FLATTEN TO 1D
     y_train_svc = y_train.ravel()
     y_test_svc = y_test.ravel()
 
+    # Histogram of Oriented Gradients (HOG) PERFORMED ON IMAGES
     x_train_svc = [hog(image,  orientations=9, 
                 pixels_per_cell=(8,8), 
                 cells_per_block=(2,2), 
@@ -115,12 +122,16 @@ def svm_hog_model(x_train, y_train, x_test, y_test):
             block_norm='L2')
             for image in x_test]
     
+    # STANDARISATION
     scaler = StandardScaler()
     x_train_svc = scaler.fit_transform(x_train_svc)
     x_test_svc = scaler.transform(x_test_svc)
 
+    # MODEL TRAINING
     model = svm.SVC(probability=True, C=1, gamma='auto', kernel='rbf', random_state=10)
     model.fit(x_train_svc, y_train_svc)
+
+    # PREDICTION + ACCURACY
     y_pred = model.predict(x_test_svc)
     test_accuracy = accuracy_score(y_test_svc, y_pred)
     print(f'\n\n\nSVM with HOG Test Accuracy: {test_accuracy}')
@@ -131,6 +142,7 @@ def random_forest_model(x_train, y_train, x_test, y_test):
     y_train_rf = y_train.ravel()
     y_test_rf = y_test.ravel()
 
+    # HOG PERFORMED ON IMAGES
     x_train_rf = [hog(image,  orientations=9, 
                 pixels_per_cell=(8,8), 
                 cells_per_block=(2,2), 
@@ -143,9 +155,12 @@ def random_forest_model(x_train, y_train, x_test, y_test):
                 block_norm='L2')
                 for image in x_test]
 
+    # STANDARISATION
     scaler = StandardScaler()
     x_train_rf = scaler.fit_transform(x_train_rf)
     x_test_rf = scaler.transform(x_test_rf)
+    
+    # MODEL TRAINING
     model = RandomForestClassifier(random_state=10,
                                    n_estimators=200, 
                                    max_depth=20, 
@@ -153,6 +168,8 @@ def random_forest_model(x_train, y_train, x_test, y_test):
                                    min_samples_leaf=1,
                                    max_features='log2')
     model.fit(x_train_rf, y_train_rf)
+
+    # PREDICTION + ACCURACY
     y_pred = model.predict(x_test_rf)
     test_accuracy = accuracy_score(y_pred, y_test_rf)
     print(f'\n\nRandom Forest with HOG Test Accuracy: {test_accuracy}')
@@ -160,13 +177,16 @@ def random_forest_model(x_train, y_train, x_test, y_test):
     metrics(model, y_test_rf, y_pred, x_test_rf, title)
 
 def logistic_regression_model(x_train, y_train, x_test, y_test):
-
+    # STANDARISATION
     scaler = StandardScaler()
     x_train = scaler.fit_transform(x_train)
     x_test = scaler.transform(x_test)
 
+    # MODEL TRAINING
     model = LogisticRegression(C=0.01, penalty='l2', solver='lbfgs', class_weight=None, max_iter=1000)
     model.fit(x_train, y_train)
+
+    # PREDICTION + ACCURACY
     y_pred = model.predict(x_test)
     accuracy = accuracy_score(y_test, y_pred)
     print(f'\n\n\nLogistic Regresssion Test Accuracy: {accuracy}')
@@ -176,25 +196,26 @@ def logistic_regression_model(x_train, y_train, x_test, y_test):
     
 def task_a_cnn(task_a_testSet):
 
+    # INITIALISE
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
     batch_size = 25
     labels=[0, 1]
     display_labels=['malignant','benign']
     target_names=['0', '1']
     test_loader = data.DataLoader(dataset=task_a_testSet, batch_size=2*batch_size, shuffle=False)
 
+    # LOAD MODEL AND WEIGHTS
     model = neuralNet_A(input_channels=1, no_classes=2).to(device)
 
     model_path = './A/cnn.pth'
     model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
     
+    # TESTING
     model.eval()
     y_true = torch.tensor([], device=device)
     y_score = torch.tensor([], device=device)
     y_score_prob = torch.tensor([], device=device)
-
-    # TESTING
+    
     with torch.no_grad():
         for inputs, targets in test_loader:
 
@@ -222,27 +243,26 @@ def task_a_cnn(task_a_testSet):
 
 
 def task_b_cnn(task_b_testSet):
-
+    # INITIALISE
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
     batch_size = 25
     labels=[0, 1, 2, 3, 4, 5, 6, 7]
     display_labels=['0', '1', '2', '3', '4', '5', '6', '7']
     target_names=['0', '1', '2', '3', '4', '5', '6', '7']
-    
     test_loader = data.DataLoader(dataset=task_b_testSet, batch_size=2*batch_size, shuffle=False)
 
+    # LOAD MODEL AND WEIGHTS
     model = neuralNet_B(input_channels=3, no_classes=8).to(device)
 
     model_path = './B/cnn.pth'
     model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
     
+    # TESTING
     model.eval()
     y_true = torch.tensor([], device=device)
     y_score = torch.tensor([], device=device)
     y_score_prob = torch.tensor([], device=device)
 
-    # TESTING
     with torch.no_grad():
         for inputs, targets in test_loader:
 
@@ -269,15 +289,15 @@ def task_b_cnn(task_b_testSet):
         metrics_cnn(y_true, y_score, y_score_prob, title, labels, display_labels, target_names)
 
 def task_b_resnet50(task_b_testSet):
+    # INITIALISE
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    
     batch_size = 25
     labels=[0, 1, 2, 3, 4, 5, 6, 7]
     display_labels=['0', '1', '2', '3', '4', '5', '6', '7']
     target_names=['0', '1', '2', '3', '4', '5', '6', '7']
-    
     test_loader = data.DataLoader(dataset=task_b_testSet, batch_size=2*batch_size, shuffle=False)
 
+    # MODEL
     resnet50 = models.resnet50(pretrained=True)
 
     num_classes = 8
@@ -295,15 +315,16 @@ def task_b_resnet50(task_b_testSet):
     for param in model.fc.parameters():
         param.requires_grad = True
 
+    # LOAD MODEL AND WEIGHTS
     model_path = './B/resnet50.pth'
     model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
 
+    # TESTING
     model.eval()
     y_true = torch.tensor([], device=device)
     y_score = torch.tensor([], device=device)
     y_score_prob = torch.tensor([], device=device)
 
-    # TESTING
     with torch.no_grad():
         for inputs, targets in test_loader:
 
@@ -344,7 +365,6 @@ def main():
     valSet = BreastMNIST(split="val", download="True")
     testSet = BreastMNIST(split="test", download="True")
 
-
     x_train = np.concatenate((trainSet.imgs, valSet.imgs), axis=0)
     y_train = np.concatenate((trainSet.labels, valSet.labels), axis=0)
     x_test = testSet.imgs
@@ -355,6 +375,7 @@ def main():
     x_test_raw = x_test.reshape(x_test.shape[0], -1)
     y_test_raw = y_test.reshape(y_test.shape[0], -1).ravel()
     
+    # AUGMENT IMAGES FOR CNN
     data_transform = transforms.Compose([
         transforms.RandomHorizontalFlip(), # important
         transforms.RandomRotation(10),
