@@ -42,10 +42,12 @@ class neuralNet_A(nn.Module):
         
     def forward(self,x):
        
+        # LAYER 1
         x = self.conv1(x)
         x = self.batchNorm1(x)
         x = self.relu(x)
-
+        
+        # LAYER 2
         x = self.conv2(x)
         x = self.batchNorm2(x)
         x = self.relu(x)
@@ -53,15 +55,18 @@ class neuralNet_A(nn.Module):
 
         x = self.dropout(x)
 
+        # LAYER 3
         x = self.conv3(x)
         x = self.batchNorm3(x)
         x = self.relu(x)
 
+        # LAYER 4
         x = self.conv4(x)
         x = self.batchNorm4(x)
         x = self.relu(x)
         x = self.maxpool(x)
 
+        # FULLY CONNECTED LAYER
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x
@@ -110,7 +115,7 @@ def main():
     pos_weight = torch.tensor([class_weights[1] / class_weights[0]], device=device)
 
 
-
+    # MODEL
     model = neuralNet_A(input_channels=1, no_classes=2).to(device)
 
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight) # SIGMOID FOR BINARY CLASSIFICATION
@@ -162,7 +167,7 @@ def main():
 
             totalTrainLoss += loss.item()
 
-            trainPred = torch.sigmoid(outputs).round() ###
+            trainPred = torch.sigmoid(outputs).round()
             train_y_true = torch.cat((train_y_true, targets), 0)
             train_y_score = torch.cat((train_y_score, trainPred), 0)
 
@@ -227,14 +232,16 @@ def main():
         #scheduler.step()
 
     model.load_state_dict(best_model_weights)
+    
+    # SAVE MODEL WEIGHTS
     torch.save(model.state_dict(), 'cnn.pth')
-            
+
+    # TESTING     
     model.eval()
     y_true = torch.tensor([], device=device)
     y_score = torch.tensor([], device=device)
     y_score_prob = torch.tensor([], device=device)
 
-    # TESTING
     with torch.no_grad():
         for inputs, targets in test_loader:
 
