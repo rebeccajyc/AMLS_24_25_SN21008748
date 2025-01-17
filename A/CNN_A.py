@@ -218,10 +218,10 @@ def main():
                     wait = 0
             else:
                 wait += 1
-                print(f"No improvement in validation loss for {wait} epoch(s).")
+                print(f"No improvement in validation loss for {wait} epoch")
 
             if wait >= patience:
-                print(f"Early stopping triggered after {epoch+1} epochs.")
+                print(f"Early stopping triggered after {epoch+1} epochs")
         
         scheduler.step(avgValLoss) # reducelronplateau
         #scheduler.step()

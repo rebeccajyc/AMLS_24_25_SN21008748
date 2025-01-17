@@ -10,9 +10,7 @@ import torch.utils.data as data
 import torch.nn as nn
 import torchvision.models as models
 from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay, classification_report, roc_curve, auc
-from sklearn.model_selection import cross_val_score, KFold, GridSearchCV
 from sklearn.preprocessing import StandardScaler
-import pandas as pd
 import matplotlib.pyplot as plt
 import sys
 import random

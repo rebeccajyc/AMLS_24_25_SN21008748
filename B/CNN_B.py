@@ -131,7 +131,7 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     #scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
-    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True) #+
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True) 
     #scheduler = ExponentialLR(optimizer, gamma=0.9)
     #scheduler = CosineAnnealingLR(optimizer, T_max=20)
 
@@ -226,10 +226,10 @@ def main():
                     wait = 0
             else:
                 wait += 1
-                print(f"No improvement in validation loss for {wait} epoch(s).")
+                print(f"No improvement in validation loss for {wait} epochs")
 
             if wait >= patience:
-                print(f"Early stopping triggered after {epoch+1} epochs.")
+                print(f"Early stopping triggered after {epoch+1} epochs")
             
         scheduler.step(avgValLoss) # reducelronplateau
         #scheduler.step()
