@@ -50,30 +50,36 @@ class neuralNet_B(nn.Module):
         
     def forward(self,x):
        
+        # LAYER 1
         x = self.conv1(x)
         x = self.batchNorm1(x)
         x = self.relu(x)
 
+        # LAYER 2
         x = self.conv2(x)
         x = self.batchNorm2(x)
         x = self.relu(x)
         x = self.maxpool(x)
 
+        # LAYER 3
         x = self.conv3(x)
         x = self.batchNorm3(x)
         x = self.relu(x)
 
+        # LAYER 4
         x = self.conv4(x)
         x = self.batchNorm4(x)
         x = self.relu(x)
 
         x = self.dropout(x)
-
+        
+        # LAYER 5
         x = self.conv5(x)
         x = self.batchNorm5(x)
         x = self.relu(x)
         x = self.maxpool(x)
 
+        # FULLY CONNECTED LAYER
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x
@@ -236,15 +242,15 @@ def main():
 
     model.load_state_dict(best_model_weights)
 
+    # SAVE MODEL WEIGHTS
     torch.save(model.state_dict(), 'cnn.pth')
         
-            
+    # TESTING
     model.eval()
     y_true = torch.tensor([], device=device)
     y_score = torch.tensor([], device=device)
     y_score_prob = torch.tensor([], device=device)
 
-    # TESTING
     with torch.no_grad():
         for inputs, targets in test_loader:
 
@@ -265,9 +271,7 @@ def main():
         y_score_prob = y_score_prob.cpu().numpy()
         
         acc = accuracy_score(y_true, y_score)
-
         testAccList.append(acc)
-
         print(f'Accuracy: {acc}')
 
 

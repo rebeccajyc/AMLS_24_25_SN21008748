@@ -66,10 +66,11 @@ resnet50.fc = nn.Linear(in_features=num_features, out_features=num_classes)
 
 model = resnet50.to(device)
 
+# FREEZE ALL LAYERS
 for param in model.parameters():
     param.requires_grad = False
 
-
+# UNFREEZE STAGE 3, 4 AND FULLY CONNECTED LAYER
 for param in model.layer3.parameters():
     param.requires_grad = True
 for param in model.layer4.parameters():
@@ -77,6 +78,7 @@ for param in model.layer4.parameters():
 for param in model.fc.parameters():
     param.requires_grad = True
 
+# LOSS FUNCTION, OPTIMISER AND LEARNING RATE SCHEDULER
 criterion = nn.CrossEntropyLoss(weight=class_weight_tensor)
 optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True) #+
@@ -180,15 +182,16 @@ for epoch in range(no_epochs):
     #scheduler.step()
 
 model.load_state_dict(best_model_weights)
-    
+
+# SAVE MODEL WEIGHTS
 torch.save(model.state_dict(), 'resnet50.pth')
 
+# TESTING
 model.eval()
 y_true = torch.tensor([], device=device)
 y_score = torch.tensor([], device=device)
 y_score_prob = torch.tensor([], device=device)
 
-# TESTING
 with torch.no_grad():
     for inputs, targets in test_loader:
 
@@ -209,9 +212,7 @@ with torch.no_grad():
     y_score_prob = y_score_prob.cpu().numpy()
     
     acc = accuracy_score(y_true, y_score)
-
     testAccList.append(acc)
-
     print(f'Test Accuracy: {acc}')
 
 
@@ -245,4 +246,3 @@ plt.show()
 # PRINTING METRICS (PRECISION, RECALL, F1-SCORE, AUC-ROC)
 print(classification_report(y_true, y_score, target_names=['0', '1', '2', '3', '4', '5', '6', '7'])) #as string
 
-# more layer unfreeze better results
